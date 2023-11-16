@@ -7,8 +7,8 @@ type GetEntriesHookResult = {
 	entries: Entry[];
 };
 
-const useGetEntriesByContentTypes = (
-	contentTypes: string[]
+const useGetEntriesByIds = (
+	ids: string[]
 ): GetEntriesHookResult => {
 
     const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -16,29 +16,33 @@ const useGetEntriesByContentTypes = (
 	const { environment } = useCMA();
 
 	useEffect(() => {
+        
 		if (!environment) return;
-        if (contentTypes.length === 0) return;
+        if (ids.length === 0) return;
 
         setIsLoading(true);
 
-        const promises = contentTypes.map((contentType) => {
+        const promises = ids.map((id) => {
             return environment.getEntries({
-				content_type: contentType,
+				'sys.id': id,
 			});
         });
 
         Promise.all(promises).then((results) => {
+
             const items: Entry[][] = results.map(({items}) => items)
             const itemsConcat = items.reduce((result, currentArray) => {
                 return result.concat(currentArray);
               }, []);
             setIsLoading(false);
             setEntries(itemsConcat);
-        }); //todo: error handling
+          
+        });
 
         return () => setIsLoading(false);
 
-	}, [contentTypes, environment]);
+
+	}, [ids, environment]);
 
 	return {
         isLoading,
@@ -46,4 +50,4 @@ const useGetEntriesByContentTypes = (
 	};
 };
 
-export default useGetEntriesByContentTypes;
+export default useGetEntriesByIds;

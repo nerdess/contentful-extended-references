@@ -1,5 +1,5 @@
 {
-  "name": "contentful-reference-selection",
+  "name": "contentful-extended-references",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
@@ -9,10 +9,8 @@
     "@contentful/react-apps-toolkit": "1.2.16",
     "contentful-management": "10.46.4",
     "emotion": "10.0.27",
-    "react": "18.2.0",
-    "react-dom": "18.2.0",
-    "react-scripts": "5.0.1",
-    "react-select": "^5.8.0"
+    "moment": "^2.29.4",
+    "react-scripts": "5.0.1"
   },
   "scripts": {
     "start": "cross-env BROWSER=none react-scripts start",

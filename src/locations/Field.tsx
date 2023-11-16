@@ -1,207 +1,157 @@
-import { useMemo } from 'react';
-import { Spinner, Note } from '@contentful/f36-components';
-import { FieldAppSDK, Entry } from '@contentful/app-sdk';
-import { /* useCMA, */ useSDK } from '@contentful/react-apps-toolkit';
-import useAutoResizer from '../lib/hooks/useAutoResizer';
-import useGetEntriesByContentTypes from '../lib/hooks/useGetEntriesByContentTypes';
-import useGetEntriesByIds from '../lib/hooks/useGetEntriesByIds';
-import useGetEntriesTitles, { EntriesTitle } from '../lib/hooks/useGetEntriesTitles';
-import useGetContentTypesByIds from '../lib/hooks/useGetContentTypesByIds';
-import getValidationsFromField from '../lib/utils/getValidationsFromField';
-import CustomSelect from '../components/CustomSelect/CustomSelect';
-import useGetContentTypesByNames from '../lib/hooks/useGetContentTypesByNames';
-import { LEVEL_FIELD_ID } from '../const';
-import getEntryLevel from '../lib/utils/getEntryLevel';
+import React, { useCallback, useMemo} from 'react';
+import { ContentType, FieldAppSDK } from '@contentful/app-sdk';
+import { useSDK } from '@contentful/react-apps-toolkit';
+import { MultipleEntryReferenceEditor } from '@contentful/field-editor-reference';
+import useAutoResizer from '../hooks/useAutoResizer';
+import { Box, FormControl, Note, Paragraph, Stack, Text } from '@contentful/f36-components';
+import { EntryProps } from 'contentful-management';
+import tokens from '@contentful/f36-tokens';
+import ValueDisplay from '../components/ValueDisplay/ValueDisplay';
 
-
-interface LinkContentType {
-	linkContentType: string[];
-}
-
-const getDefaultValue = ({
-	entries, 
-	entriesTitles, 
-	locale, 
-	contentTypes,
-	levels
+const getFieldFromEntry = ({
+	field, 
+	contentType, 
+	entry, 
+	locale
 }:{
-	entries: Entry[], 
-	entriesTitles: EntriesTitle[], 
-	locale: string, 
-	contentTypes: string[],
-	levels: any[]
+	field: string, 
+	contentType: ContentType, 
+	entry:EntryProps, locale:string
 }) => {
+	
+	const {
+		fields
+	} = contentType || {};
 
-	if (!entriesTitles || !contentTypes) return [];
-
-	const result = entries.map((entry: Entry) => {
-
-		const contentType = entry.sys.contentType.sys.id;
-		const entryTitle = entriesTitles.find(({id}) => contentType === id);
-		const {
-			displayField
-		} = entryTitle || {} ;
-		const label = (!!displayField && !!locale) ? (entry.fields[displayField][locale]) : 'Untitled';
-		const error = !contentTypes.includes(contentType);
-
-
-		const level = getEntryLevel({
-			entry, 
-			locale,
-			levels
-		});
-
-		return {
-			entry: {
-				sys: {
-					type: 'Link',
-					linkType: entry.sys.type,
-					id: entry.sys.id
-				},
-			},
-			value: entry.sys.id,
-			label,
-			error,
-			level
-		};
-  	});
-  	return result;
-
+	const schema = fields?.find((f) => f.id === field);
+	const value = entry?.fields?.[field]?.[locale];
+	
+	return {
+		schema,
+		value
+	}
 }
 
-const getIds = (value: any) => {
 
-  if (Array.isArray(value)) {
-    return value.map(({sys}) => sys.id);
-  }
-
-  if (!Array.isArray(value) && typeof value === 'object' && value !== null) {
-    return [value.sys.id];
-  }
-
-  return [];
-};
-
-const validationCheck = (field: FieldAppSDK['field']): boolean | string => {
-
-  if (field.type !== 'Array' /*&& field.type !== 'Link'*/) {
-    return 'This app only works on a reference (many) field 🤡';
-  }
-
-  return false;
+const FieldDisplay = ({ 
+	label, 
+	value
+}: {
+		label?: string, 
+		value: React.ReactNode
+}) => {
+	return (
+		<Box>
+			<FormControl.Label style={{margin: 0}}>
+				{label || 'n/a'}
+			</FormControl.Label>
+			<Box>
+				{value}			
+			</Box>
+		</Box>
+	)
 }
+
+
 
 const Field = () => {
 
 	useAutoResizer();
-
 	const sdk = useSDK<FieldAppSDK>();
-	const error = useMemo(() => validationCheck(sdk.field), [sdk.field]);
-	const validations = useMemo(() => getValidationsFromField(sdk.field), [sdk.field]);
+	const fields = useMemo(() => sdk.parameters.instance.fieldIds.split(',').map((fieldId:string) => fieldId.trim()), [sdk]) as string[];
 
-	const optionsContentTypes: string[] = useMemo(
-		() =>
-			validations.reduce((accumulator: [], currentValue: LinkContentType) => {
-				const { linkContentType } = currentValue;
-				return [...accumulator, ...linkContentType];
-			}, []),
-		[validations]
-	);
+	const renderCustomChildren = useCallback((entry: any, contentType: any) => {
+		//({entry, contentType}) => {
 
-  	const defaultIds = useMemo(() => getIds(sdk.field.getValue()), [sdk.field]);
+			const result = fields.map((field) => {
 
-	const {
-		isLoading: isLoadingContentTypes,
-		contentTypes: defaultsContentTypes
-	} = useGetContentTypesByIds(defaultIds);
+				const {
+					schema,
+					value
+				} = getFieldFromEntry({field, contentType, entry, locale: sdk.field.locale});
 
-	const contentTypes = useMemo(() => {
-		return [...new Set([...optionsContentTypes, ...defaultsContentTypes])]
-	}, [optionsContentTypes, defaultsContentTypes]);
+				if (!schema) {
+					return (
+						<Note key={field} variant="warning">
+							<Paragraph>
+								There is no field with name <strong>{field}</strong>.
+							</Paragraph> 
+							<Text>
+								Remove it from the definition of <em>{sdk.field.name}</em> or add it to the content model of <em>{contentType?.name}</em>.<br />
+							</Text>
+						</Note>
+					);
+				}
 
-	const { 
-		isLoading: isLoadingOptions, 
-		entries: options 
-	} = useGetEntriesByContentTypes(optionsContentTypes);
+				const _value = <ValueDisplay schema={schema} value={value} />;
 
-	const { 
-		isLoading: isLoadingDefaults, 
-		entries: defaults 
-	} = useGetEntriesByIds(defaultIds);
+				if ((typeof(value) === 'string' && value?.replace(/<[^>]*>/g, '').length === 0) || !value) {
+					return null;
+				}
 
-	const { 
-		isLoading: isLoadingEntriesTitles, 
-		entriesTitles 
-	} = useGetEntriesTitles(contentTypes);
+				return (
+					<FieldDisplay 
+						key={field} 
+						label={schema?.name} 
+						value={_value}
+					/>
+				)
+		
+			});
 
-	const {
-		isLoading: isLoadinOptionsContentTypesFull,
-		isError: isErrorOptionsContentTypesFull,
-		result: optionsContentTypesFull
-	} = useGetContentTypesByNames(optionsContentTypes);
-
-	const levels = useMemo(() => optionsContentTypesFull.map((contentType) => {
-
-		let _levels = [] as string[];
-		const validations = contentType.fields.find(({id}) => id === LEVEL_FIELD_ID)?.items?.validations;
-
-		if (
-			Array.isArray(validations) 
-			&& validations.length > 0
-			&& validations[0].in
-		) {
-			_levels = validations[0].in as string[];	
-		}
-
-		return {
-			id: contentType.sys.id,
-			levels: _levels
-		}
-
-	}), [optionsContentTypesFull]);
-
-
-
-	const defaultValue = useMemo(() => getDefaultValue({
-		entries: defaults, 
-		entriesTitles, 
-		locale: sdk.field.locale, 
-		contentTypes: optionsContentTypes,
-		levels
-	}), [
-		defaults, 
-		entriesTitles, 
-		sdk.field.locale,
-		optionsContentTypes,
-		levels
+			if (fields.length === 0) return null;
+			if (result.filter((item) => !!item).length === 0) return null;
+			
+			return (
+				<Box
+					style={{
+						backgroundColor: tokens.gray100,
+						borderRadius: tokens.borderRadiusMedium
+					}}
+					marginTop="spacingXs"
+					padding="spacingM"
+				>
+					<Stack
+						flexDirection="column"
+						alignItems="start"
+						spacing="spacingL"
+					>
+						{result}
+					</Stack>
+				</Box>
+			)
+		//}
+	}, [
+		sdk.field.locale, 
+		sdk.field.name, 
+		fields
 	]);
 
-
-
-	if (
-		isLoadingOptions
-		|| isLoadingDefaults 
-		|| isLoadingEntriesTitles 
-		|| isLoadingContentTypes
-		|| isLoadinOptionsContentTypesFull
-	) {
-		return <Spinner variant='default' />;
+	if (!sdk.parameters.instance.fieldIds || fields.length === 0) {
+		return (
+			<Note variant='negative' style={{ width: '100%' }}>
+				<strong>No fieldIds were found!</strong> 😱 <br />
+				Please define correct fieldIds in the content model (entry title {`>`}{' '}
+				appearance) or remove this app from there.
+			</Note>
+		);
 	}
 
-	if (
-		error
-		|| isErrorOptionsContentTypesFull
-	) {
-		return <Note variant="negative">{error}</Note>;
-	}
 
 	return (
-		<CustomSelect 
-			defaultValue={defaultValue}
-			//options={prepareOptions({options, contentTypes: optionsContentTypesFull})}
-			options={options}
-			entriesTitles={entriesTitles}
-			levels={levels}
+		<MultipleEntryReferenceEditor
+			//renderCustomCard={customRenderer}
+			renderCustomChildren={({entry, contentType}) => renderCustomChildren(entry, contentType)}
+			viewType='link'
+				sdk={sdk}
+			isInitiallyDisabled
+			hasCardEditActions={false}
+			parameters={{
+				instance: {
+					showCreateEntityAction: true,
+					showLinkEntityAction: true,
+				},
+			}}
 		/>
 	);
 };

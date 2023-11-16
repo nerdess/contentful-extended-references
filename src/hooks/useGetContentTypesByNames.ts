@@ -5,32 +5,32 @@ import { ContentType } from 'contentful-management';
 type GetEntriesHookResult = {
     isLoading: boolean;
     isError: boolean;
-	result: ContentType[];
+	contentTypes: ContentType[];
 };
 
 const useGetContentTypesByNames = (
 	names: string[]
-    //query: QueryOptions
 ): GetEntriesHookResult => {
 
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [isError, setIsError] = useState<boolean>(false);
-	const [result, setResult] = useState<any>([]);
+	const [contentTypes, setContentTypes] = useState<any>([]);
 	const { environment } = useCMA();
 
 	useEffect(() => {
 		if (!environment) return;
+        if (names.length === 0) return;
 
         setIsLoading(true);
 
         environment.getContentTypes().then(({items}) => {
         
-            const foo = items.filter(({sys}) => {
+            const result = items.filter(({sys}) => {
                 return names.includes(sys.id)
             });
 
             setIsLoading(false);
-            setResult(foo);
+            setContentTypes(result);
         }); //todo: error handling
 
         return () => setIsLoading(false);
@@ -40,7 +40,7 @@ const useGetContentTypesByNames = (
 	return {
         isLoading,
         isError,
-		result,
+		contentTypes,
 	};
 };
 
