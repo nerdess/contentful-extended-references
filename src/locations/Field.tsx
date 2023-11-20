@@ -59,6 +59,9 @@ const Field = () => {
 	useAutoResizer();
 	const sdk = useSDK<FieldAppSDK>();
 	const fields = useMemo(() => sdk.parameters.instance.fieldIds.split(',').map((fieldId:string) => fieldId.trim()), [sdk]) as string[];
+	const showCreateEntityAction = sdk.parameters.instance.showCreateEntityAction;
+	const showLinkEntityAction = sdk.parameters.instance.showLinkEntityAction;
+	const bulkEditing = sdk.parameters.instance.bulkEditing;
 
 	const renderCustomChildren = useCallback((entry: any, contentType: any) => {
 		//({entry, contentType}) => {
@@ -143,13 +146,14 @@ const Field = () => {
 			//renderCustomCard={customRenderer}
 			renderCustomChildren={({entry, contentType}) => renderCustomChildren(entry, contentType)}
 			viewType='link'
-				sdk={sdk}
+			sdk={sdk}
 			isInitiallyDisabled
 			hasCardEditActions={false}
 			parameters={{
 				instance: {
-					showCreateEntityAction: true,
-					showLinkEntityAction: true,
+					showCreateEntityAction: !!showCreateEntityAction,
+					showLinkEntityAction: !!showLinkEntityAction,
+					bulkEditing: !!bulkEditing
 				},
 			}}
 		/>

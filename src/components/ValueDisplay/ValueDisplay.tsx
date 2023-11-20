@@ -2,7 +2,6 @@ import moment from 'moment';
 import { Note, Text } from '@contentful/f36-components';
 import Asset from './types/Asset';
 import Reference from './types/Reference';
-import MissingContent from './MissingContent';
 
 const truncateText = (text: string = '', maxLength: number = 50) => {
 	if (text.length <= maxLength) {
@@ -19,6 +18,8 @@ const ValueDisplay = ({
 	schema: any,
 	value: any
 }) => {
+
+	
 
 	const {
 		type,
@@ -52,8 +53,13 @@ const ValueDisplay = ({
 	}
 
     if (type === 'Array') {
-        const ids = value?.map((v:any) => v.sys.id);
-		return <Reference ids={ids} /> 
+        const elements = value?.map((v:any) => {
+			if (typeof(v) === 'string') {
+				return <Text key={v}>{v}</Text>
+			}
+			return <Reference key={v.sys.id} ids={[v.sys.id]} />;
+		}) || null;
+		return elements
 	}
 
 	if (type === 'Date') {
