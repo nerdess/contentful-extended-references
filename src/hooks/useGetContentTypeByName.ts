@@ -13,7 +13,7 @@ const useGetContentTypeByName = (
 ): GetEntriesHookResult => {
 
     const [isLoading, setIsLoading] = useState<boolean>(false);
-    const [isError, setIsError] = useState<boolean>(false);
+    const [isError] = useState<boolean>(false);
 	const [contentType, setContentType] = useState<ContentType | undefined>();
 	const { environment } = useCMA();
 

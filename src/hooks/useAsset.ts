@@ -1,4 +1,4 @@
-import { Asset, Environment } from "contentful-management";
+import { Asset } from "contentful-management";
 import { useEffect, useState } from "react";
 import useCMA from "./useCMA";
 
