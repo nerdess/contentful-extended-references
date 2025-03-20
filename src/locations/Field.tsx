@@ -1,8 +1,8 @@
 import { useCallback, useMemo } from 'react';
 import { ContentType, FieldAppSDK } from '@contentful/app-sdk';
-import { useSDK } from '@contentful/react-apps-toolkit';
+import { useAutoResizer, useSDK } from '@contentful/react-apps-toolkit';
 import { MultipleEntryReferenceEditor } from '@contentful/field-editor-reference';
-import useAutoResizer from '../hooks/useAutoResizer';
+
 import {
 	Box,
 	FormControl,
@@ -14,7 +14,9 @@ import {
 import { EntryProps } from 'contentful-management';
 import tokens from '@contentful/f36-tokens';
 import ValueDisplay from '../components/ValueDisplay/ValueDisplay';
-import { WrappedEntryCardProps } from '../../../../../forks/field-editors/packages/reference/dist/types/entries/WrappedEntryCard/WrappedEntryCard';
+//import {WrappedEntryCard, WrappedEntryCardProps } from '../../../field-editors/packages/reference/dist/types/entries/WrappedEntryCard/WrappedEntryCard';
+
+//import WrappedEntryCardProps  from '@contentful/field-editor-reference';
 
 const getFieldFromEntry = ({
 	field,
@@ -70,7 +72,7 @@ const Field = () => {
 	const bulkEditing = sdk.parameters.instance.bulkEditing;
 
 	const renderCustomChildren = useCallback(
-		(props: WrappedEntryCardProps) => {
+		(props: any) => {
 
 			const { entry, contentType } = props;
 
@@ -146,7 +148,7 @@ const Field = () => {
 
 	return (
 		<MultipleEntryReferenceEditor
-			renderCustomChildren={(props: WrappedEntryCardProps) => renderCustomChildren(props)}
+			renderCustomChildren={(props: any) => renderCustomChildren(props)}
 			viewType='link'
 			sdk={sdk}
 			isInitiallyDisabled
