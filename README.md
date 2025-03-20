@@ -1,5 +1,60 @@
 This project was bootstrapped with [Create Contentful App](https://github.com/contentful/create-contentful-app).
 
+## What it does
+
+🔴🔴🔴 **PLEASE READ THIS CAREFULLY TO GET HIS CONTENTFUL APP TO WORK** 🔴🔴🔴 
+
+This Contentful app allows to add additional information to a field that uses "References, many".
+
+<img width="927" alt="Bildschirmfoto 2025-03-20 um 12 31 43" src="https://github.com/user-attachments/assets/5ff231a0-53ac-4070-82f6-f9f05811fd2b" />
+
+
+The field ids of the additional need to be defined wherever this extension is used
+
+<img width="864" alt="Bildschirmfoto 2025-03-20 um 12 53 35" src="https://github.com/user-attachments/assets/865b04fb-d6f5-471f-8d3c-29312addd542" />
+
+🔴 **IMPORTANT**🔴  The app relies on a fork of the Contentful field-editors in order to work. 
+
+This fork can be found here: https://github.com/urbanmedia/background.contentful.field-editors
+
+The installation process is a bit tricky and **only works using yarn**.
+
+**These are the steps:**
+
+1. Clone this repo as well as https://github.com/urbanmedia/background.contentful.field-editors
+
+2. Run `yarn install` on both
+
+3. In the field-editors repo go to these folders and run `yarn link` in each folder one by one:
+
+```
+/packages/reference 
+ /node_modules/react 
+/node_modules/react-dom
+ /node_modules/@contentful/app-sdk 
+/node_modules/contentful-management
+```
+
+4. Then go to the clone of this repo and run
+
+```
+yarn link "@contentful/field-editor-reference"
+yarn link "react"
+yarn link "react-dom"
+yarn link "@contentful/app-sdk "
+yarn link "contentful-management"
+```
+
+5. Finally, you should be able to `run yarn` start!
+
+
+
+
+
+
+
+
+
 ## How to use
 
 Execute create-contentful-app with npm, npx or yarn to bootstrap the example:
